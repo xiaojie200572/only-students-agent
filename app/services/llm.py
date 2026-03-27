@@ -1,5 +1,4 @@
 from typing import AsyncGenerator, List, Dict, Any
-import httpx
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.outputs import ChatGenerationChunk
@@ -12,9 +11,9 @@ settings = get_settings()
 class LLMService:
     def __init__(self):
         self.llm = ChatOpenAI(
-            model=settings.deepseek_model,
-            api_key=settings.deepseek_api_key,
-            base_url=settings.deepseek_base_url,
+            model=settings.llm_model,
+            api_key=settings.dashscope_api_key,
+            base_url=settings.dashscope_base_url,
             streaming=True,
             temperature=0.7,
         )
@@ -34,30 +33,30 @@ class LLMService:
         context: str = "",
     ) -> AsyncGenerator[Dict[str, Any], None]:
         messages = [SystemMessage(content=self.system_prompt)]
-        
+
         if context:
             messages.append(SystemMessage(content=f"相关笔记内容：\n{context}"))
-        
+
         for msg in history[-10:]:
             if msg["role"] == "user":
                 messages.append(HumanMessage(content=msg["content"]))
             else:
                 messages.append(AIMessage(content=msg["content"]))
-        
+
         messages.append(HumanMessage(content=message))
-        
+
         async for chunk in self.llm.astream(messages):
             if isinstance(chunk, ChatGenerationChunk):
                 yield {"type": "content", "content": chunk.content}
 
     def chat(self, message: str, context: str = "") -> str:
         messages = [SystemMessage(content=self.system_prompt)]
-        
+
         if context:
             messages.append(SystemMessage(content=f"相关笔记内容：\n{context}"))
-        
+
         messages.append(HumanMessage(content=message))
-        
+
         response = self.llm.invoke(messages)
         return response.content
 

@@ -43,32 +43,7 @@ services:
       - ./data/minio:/minio_data
     command: minio server /minio_data --console-address ":9001"
 
-  # Ollama (Embedding 模型服务)
-  ollama:
-    image: ollama/ollama:latest
-    container_name: only-students-ollama
-    ports:
-      - "11434:11434"      # Ollama API
-    volumes:
-      - ./data/ollama:/root/.cache/huggingface
-    deploy:
-      resources:
-        limits:
-          memory: 8G
-
-  # Redis (会话记忆)
-  redis:
-    image: redis:7-alpine
-    container_name: only-students-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - ./data/redis:/data
-    command: redis-server --appendonly yes
-
 volumes:
   milvus-data:
   etcd-data:
   minio-data:
-  ollama-data:
-  redis-data:

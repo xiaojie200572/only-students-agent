@@ -15,9 +15,9 @@ memory_service = MemoryService()
 
 async def chat_event_generator(request: ChatRequest):
     history = memory_service.get_history(request.session_id)
-    
+
     yield {"event": "status", "data": json.dumps({"type": "status", "content": "thinking"})}
-    
+
     async for chunk in rag_service.chat_stream(
         message=request.message,
         history=history,
@@ -32,10 +32,10 @@ async def chat_event_generator(request: ChatRequest):
                 )
                 for s in chunk.get("sources", [])
             ]
-            yield {"event": "done", "data": json.dumps({"type": "done", "sources": [s.model_dump() for s in sources]})
+            yield {"event": "done", "data": json.dumps({"type": "done", "sources": [s.model_dump() for s in sources]})}
         else:
             yield {"event": "content", "data": json.dumps({"type": "content", "content": chunk.get("content", "")})}
-    
+
     memory_service.add_message(request.session_id, "user", request.message)
     memory_service.add_message(request.session_id, "assistant", chunk.get("content", ""))
 

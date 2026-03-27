@@ -10,21 +10,18 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # 阿里云百炼 API
+    dashscope_api_key: str = ""
+    dashscope_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
     # LLM
-    deepseek_api_key: str = ""
-    deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model: str = "deepseek-chat"
+    llm_model: str = "qwen3.5-flash"
 
     # Embedding
-    embedding_model: str = "bge-m3"
-    embedding_api_url: str = "http://localhost:11434/api"
-    embedding_dim: int = 1024
+    embedding_model: str = "tongyi-embedding-vision-plus-2026-03-06"
+    embedding_dim: int = 1536
 
-    # Rerank
-    rerank_model: str = "bge-reranker-v2-m3"
-    rerank_api_url: str = "http://localhost:11434/api"
-
-    # Milvus
+    # 向量库
     milvus_host: str = "localhost"
     milvus_port: int = 19530
     milvus_collection: str = "notes"
@@ -32,14 +29,14 @@ class Settings(BaseSettings):
     milvus_metric_type: str = "cosine"
 
     # Redis
-    redis_url: str = "redis://localhost:6379/0"
+    redis_url: str = "redis://localhost:6379/1"
     redis_session_ttl: int = 3600
 
-    # Java API
+    # Java 后端
     java_api_base_url: str = "http://localhost:8080"
     java_api_key: str = ""
 
-    # Server
+    # 服务配置
     agent_host: str = "0.0.0.0"
     agent_port: int = 8000
     log_level: str = "INFO"
