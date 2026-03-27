@@ -22,11 +22,13 @@ class Settings(BaseSettings):
     embedding_dim: int = 1536
 
     # 向量库
+    milvus_mode: str = "lite"  # "lite" 使用本地文件, "remote" 远程连接
     milvus_host: str = "localhost"
     milvus_port: int = 19530
     milvus_collection: str = "notes"
     milvus_index_type: str = "hnsw"
     milvus_metric_type: str = "cosine"
+    milvus_uri: str = "./data/milvus.db"  # Lite 模式下的本地文件路径
 
     # Redis
     redis_url: str = "redis://localhost:6379/1"
@@ -40,6 +42,15 @@ class Settings(BaseSettings):
     agent_host: str = "0.0.0.0"
     agent_port: int = 8000
     log_level: str = "INFO"
+
+    # RabbitMQ 配置
+    rabbitmq_host: str = "localhost"
+    rabbitmq_port: int = 5672
+    rabbitmq_username: str = "guest"
+    rabbitmq_password: str = "guest"
+    rabbitmq_queue: str = "note.vector.sync.queue"
+    rabbitmq_exchange: str = "note.exchange"
+    rabbitmq_routing_key: str = "note.vector.sync"
 
 
 @lru_cache

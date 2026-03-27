@@ -1,6 +1,7 @@
 from typing import List, Dict, Any, Optional
-from pymilvus import MilvusClient, FieldSchema, CollectionSchema, DataType, AnnSearchRequest
-import numpy as np
+
+from pymilvus import MilvusClient, FieldSchema, CollectionSchema, DataType
+from pymilvus.milvus_client.index import IndexParams
 
 from app.config import get_settings
 
@@ -9,9 +10,11 @@ settings = get_settings()
 
 class VectorStore:
     def __init__(self):
-        self.client = MilvusClient(
-            uri=f"http://{settings.milvus_host}:{settings.milvus_port}"
-        )
+        if settings.milvus_mode == "lite":
+            self.client = MilvusClient(uri=settings.milvus_uri)
+        else:
+            self.client = MilvusClient(uri=f"http://{settings.milvus_host}:{settings.milvus_port}")
+
         self.collection_name = settings.milvus_collection
         self._ensure_collection()
 
@@ -26,26 +29,33 @@ class VectorStore:
                 FieldSchema(name="author_id", dtype=DataType.INT64),
                 FieldSchema(name="author_name", dtype=DataType.VARCHAR, max_length=128),
                 FieldSchema(name="tags", dtype=DataType.VARCHAR, max_length=512),
-                FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=settings.embedding_dim),
+                FieldSchema(
+                    name="embedding", dtype=DataType.FLOAT_VECTOR, dim=settings.embedding_dim
+                ),
             ]
-            
+
             schema = CollectionSchema(fields=fields, description="Notes collection for RAG")
-            
+
             self.client.create_collection(
                 collection_name=self.collection_name,
                 schema=schema,
-                index_params={
-                    "embedding": {
-                        "index_type": settings.milvus_index_type.upper(),
-                        "metric_type": settings.milvus_metric_type.upper(),
-                        "params": {},
-                    }
-                },
             )
 
-    async def search(
-        self, query_vector: List[float], top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+            index_params = IndexParams()
+            index_params.add_index(
+                field_name="embedding",
+                index_type="AUTOINDEX",
+                metric_type="COSINE",
+            )
+
+            self.client.create_index(
+                collection_name=self.collection_name,
+                index_params=index_params,
+            )
+
+            self.client.load_collection(self.collection_name)
+
+    async def search(self, query_vector: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
         try:
             results = self.client.search(
                 collection_name=self.collection_name,
@@ -53,22 +63,26 @@ class VectorStore:
                 limit=top_k,
                 output_fields=["note_id", "title", "content", "summary", "author_name", "tags"],
             )
-            
+
             if not results or not results[0]:
                 return []
-            
+
             formatted = []
             for hit in results[0]:
-                formatted.append({
-                    "note_id": hit["entity"]["note_id"],
-                    "title": hit["entity"]["title"],
-                    "content": hit["entity"].get("content", ""),
-                    "summary": hit["entity"].get("summary", ""),
-                    "author_name": hit["entity"].get("author_name", ""),
-                    "tags": hit["entity"].get("tags", ""),
-                    "similarity": float(1 / (1 + hit["distance"])) if hit["distance"] > 0 else 1.0,
-                })
-            
+                formatted.append(
+                    {
+                        "note_id": hit["entity"]["note_id"],
+                        "title": hit["entity"]["title"],
+                        "content": hit["entity"].get("content", ""),
+                        "summary": hit["entity"].get("summary", ""),
+                        "author_name": hit["entity"].get("author_name", ""),
+                        "tags": hit["entity"].get("tags", ""),
+                        "similarity": float(1 / (1 + hit["distance"]))
+                        if hit["distance"] > 0
+                        else 1.0,
+                    }
+                )
+
             return formatted
         except Exception as e:
             print(f"Search error: {e}")
@@ -77,24 +91,26 @@ class VectorStore:
     def insert(self, notes: List[Dict[str, Any]]) -> int:
         if not notes:
             return 0
-        
+
         data = []
         for note in notes:
-            data.append({
-                "id": note.get("id", note["note_id"]),
-                "note_id": note["note_id"],
-                "title": note.get("title", ""),
-                "content": note.get("content", ""),
-                "summary": note.get("summary", note.get("content", "")[:500]),
-                "author_id": note.get("author_id", 0),
-                "author_name": note.get("author_name", ""),
-                "tags": ",".join(note.get("tags", [])),
-                "embedding": note["embedding"],
-            })
-        
+            data.append(
+                {
+                    "id": note.get("id", note["note_id"]),
+                    "note_id": note["note_id"],
+                    "title": note.get("title", ""),
+                    "content": note.get("content", ""),
+                    "summary": note.get("summary", note.get("content", "")[:500]),
+                    "author_id": note.get("author_id", 0),
+                    "author_name": note.get("author_name", ""),
+                    "tags": ",".join(note.get("tags", [])),
+                    "embedding": note["embedding"],
+                }
+            )
+
         self.client.insert(collection_name=self.collection_name, data=data)
         self.client.flush(collection_name=self.collection_name)
-        
+
         return len(data)
 
     def delete_by_ids(self, ids: List[int]) -> None:

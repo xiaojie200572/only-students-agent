@@ -24,13 +24,13 @@ class NoteIngestor:
                 params = {"page": page, "size": page_size}
                 if since_id:
                     params["since_id"] = since_id
-                
+
                 response = await client.get(
-                    f"{settings.java_api_base_url}/api/notes",
+                    f"{settings.java_api_base_url}/api/note/published",
                     params=params,
                     timeout=30.0,
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     return data.get("data", data.get("list", []))
@@ -50,47 +50,45 @@ class NoteIngestor:
             if isinstance(tags, str):
                 tags = tags.split(",")
             parts.append("标签: " + ", ".join(tags))
-        
+
         return "\n".join(filter(None, parts))
 
-    async def sync_notes(
-        self, full_sync: bool = False, since_id: Optional[int] = None
-    ) -> int:
+    async def sync_notes(self, full_sync: bool = False, since_id: Optional[int] = None) -> int:
         total_synced = 0
         page = 1
         page_size = 100
-        
+
         if full_sync:
             self.vector_store.clear()
-        
+
         while True:
             notes = await self.fetch_notes_from_api(
                 page=page, page_size=page_size, since_id=since_id
             )
-            
+
             if not notes:
                 break
-            
+
             texts = [self.prepare_note_text(note) for note in notes]
             embeddings = await embedder.embed_documents(texts)
-            
+
             for i, note in enumerate(notes):
                 note["embedding"] = embeddings[i]
-            
+
             count = self.vector_store.insert(notes)
             total_synced += count
-            
+
             print(f"Synced page {page}: {count} notes")
-            
+
             if len(notes) < page_size:
                 break
-            
+
             page += 1
             await asyncio.sleep(0.5)
-        
+
         self.last_sync_time = datetime.now()
         self.sync_count = total_synced
-        
+
         return total_synced
 
     def get_sync_status(self) -> Dict[str, Any]:
