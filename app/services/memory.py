@@ -8,6 +8,7 @@ settings = get_settings()
 
 
 class MemoryService:
+
     def __init__(self):
         self.redis_client: Optional[redis.Redis] = None
 
@@ -26,7 +27,7 @@ class MemoryService:
     async def add_message(self, session_id: str, role: str, content: str) -> None:
         client = await self._get_client()
         key = self._get_key(session_id)
-        
+
         message = json.dumps({"role": role, "content": content})
         await client.rpush(key, message)
         await client.expire(key, settings.redis_session_ttl)
@@ -37,7 +38,7 @@ class MemoryService:
     async def get_history_async(self, session_id: str) -> List[Dict[str, str]]:
         client = await self._get_client()
         key = self._get_key(session_id)
-        
+
         messages = await client.lrange(key, 0, -1)
         return [json.loads(msg) for msg in messages]
 
