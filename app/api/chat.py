@@ -14,7 +14,7 @@ memory_service = MemoryService()
 
 
 async def chat_event_generator(request: ChatRequest):
-    history = memory_service.get_history(request.session_id)
+    history = memory_service.get_history_async(request.session_id)
 
     yield {"event": "status", "data": json.dumps({"type": "status", "content": "thinking"})}
 
@@ -36,8 +36,8 @@ async def chat_event_generator(request: ChatRequest):
         else:
             yield {"event": "content", "data": json.dumps({"type": "content", "content": chunk.get("content", "")})}
 
-    memory_service.add_message(request.session_id, "user", request.message)
-    memory_service.add_message(request.session_id, "assistant", chunk.get("content", ""))
+    await memory_service.add_message(request.session_id, "user", request.message)
+    await memory_service.add_message(request.session_id, "assistant", chunk.get("content", ""))
 
 
 @router.post("/chat")

@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379/1"
     redis_session_ttl: int = 3600
-
+    redis_max_history: int =20
     # Java 后端
     java_api_base_url: str = "http://localhost:8080"
     java_api_key: str = ""

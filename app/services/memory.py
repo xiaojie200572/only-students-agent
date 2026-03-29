@@ -5,7 +5,7 @@ import redis.asyncio as redis
 from app.config import get_settings
 
 settings = get_settings()
-
+MAX_HISTORY_SIZE = settings.redis_max_history
 
 class MemoryService:
 
@@ -30,10 +30,8 @@ class MemoryService:
 
         message = json.dumps({"role": role, "content": content})
         await client.rpush(key, message)
+        await client.ltrim(key,-MAX_HISTORY_SIZE,-1)
         await client.expire(key, settings.redis_session_ttl)
-
-    def get_history(self, session_id: str) -> List[Dict[str, str]]:
-        return []
 
     async def get_history_async(self, session_id: str) -> List[Dict[str, str]]:
         client = await self._get_client()

@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -11,8 +10,8 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    #延迟导入 / 避免循环依赖
     from app.vector.consumer import start_rabbitmq_consumer
-
     start_rabbitmq_consumer()
     yield
 
