@@ -20,7 +20,7 @@ class Embedder:
         }
 
     async def embed_query(self, text: str) -> List[float]:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncCalient() as client:
             try:
                 response = await client.post(
                     f"{self.api_url}/embeddings",

@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     embedding_dim: int = 1536
 
     # 向量库
-    milvus_mode: str = "lite"  # "lite" 使用本地文件, "remote" 远程连接
+    milvus_mode: str = "remote"  # "lite" 使用本地文件, "remote" 远程连接
     milvus_host: str = "localhost"
     milvus_port: int = 19530
     milvus_collection: str = "notes"
@@ -45,9 +45,9 @@ class Settings(BaseSettings):
 
     # RabbitMQ 配置
     rabbitmq_host: str = "localhost"
-    rabbitmq_port: int = 5672
-    rabbitmq_username: str = "guest"
-    rabbitmq_password: str = "guest"
+    rabbitmq_port: int =15672
+    rabbitmq_username: str = "admin"
+    rabbitmq_password: str = "admin123"
     rabbitmq_queue: str = "note.vector.sync.queue"
     rabbitmq_exchange: str = "note.exchange"
     rabbitmq_routing_key: str = "note.vector.sync"
