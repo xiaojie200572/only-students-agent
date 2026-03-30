@@ -46,6 +46,7 @@ logs/
 *.log
 
 # Docker
+volumes/
 data/
 
 # Model cache
