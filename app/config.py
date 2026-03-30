@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     # LLM
     llm_model: str = "qwen3.5-flash"
+    max_context_tokens: int = 4000
 
     # Embedding
     embedding_model: str = "tongyi-embedding-vision-plus-2026-03-06"
@@ -33,7 +34,7 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379/1"
     redis_session_ttl: int = 3600
-    redis_max_history: int =20
+    redis_max_history: int = 20
     # Java 后端
     java_api_base_url: str = "http://localhost:8080"
     java_api_key: str = ""
@@ -45,7 +46,7 @@ class Settings(BaseSettings):
 
     # RabbitMQ 配置
     rabbitmq_host: str = "localhost"
-    rabbitmq_port: int =15672
+    rabbitmq_port: int = 15672
     rabbitmq_username: str = "admin"
     rabbitmq_password: str = "admin123"
     rabbitmq_queue: str = "note.vector.sync.queue"

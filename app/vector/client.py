@@ -10,16 +10,23 @@ settings = get_settings()
 
 class VectorStore:
     def __init__(self):
-        if settings.milvus_mode == "lite":
-            self.client = MilvusClient(uri=settings.milvus_uri)
-        else:
-            self.client = MilvusClient(uri=f"http://{settings.milvus_host}:{settings.milvus_port}")
-
+        self._client = None
         self.collection_name = settings.milvus_collection
-        self._ensure_collection()
+
+    @property
+    def client(self):
+        if self._client is None:
+            if settings.milvus_mode == "lite":
+                self._client = MilvusClient(uri=settings.milvus_uri)
+            else:
+                self._client = MilvusClient(
+                    uri=f"http://{settings.milvus_host}:{settings.milvus_port}"
+                )
+            self._ensure_collection()
+        return self._client
 
     def _ensure_collection(self) -> None:
-        if not self.client.has_collection(self.collection_name):
+        if not self._client.has_collection(self.collection_name):
             fields = [
                 FieldSchema(name="id", dtype=DataType.INT64, is_primary=True),
                 FieldSchema(name="note_id", dtype=DataType.INT64),
@@ -36,7 +43,7 @@ class VectorStore:
 
             schema = CollectionSchema(fields=fields, description="Notes collection for RAG")
 
-            self.client.create_collection(
+            self._client.create_collection(
                 collection_name=self.collection_name,
                 schema=schema,
             )
@@ -48,12 +55,12 @@ class VectorStore:
                 metric_type="COSINE",
             )
 
-            self.client.create_index(
+            self._client.create_index(
                 collection_name=self.collection_name,
                 index_params=index_params,
             )
 
-            self.client.load_collection(self.collection_name)
+            self._client.load_collection(self.collection_name)
 
     async def search(self, query_vector: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
         try:
@@ -132,3 +139,6 @@ class VectorStore:
         if self.client.has_collection(self.collection_name):
             self.client.drop_collection(self.collection_name)
             self._ensure_collection()
+
+
+# TODO

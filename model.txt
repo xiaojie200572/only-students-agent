@@ -1,3 +1,2 @@
 LLM: qwen3.5-flash
-EMBEDDING: tongyi-embedding-vision-plus-2026-03-06
-RERANK: qwen3-vl-rerank
+EMBEDDING: text-embedding-v4

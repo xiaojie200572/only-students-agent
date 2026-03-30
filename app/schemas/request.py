@@ -6,6 +6,7 @@ class ChatRequest(BaseModel):
     session_id: str
     message: str
     use_rag: bool = True
+    use_agent: bool = False
 
 
 class MentionRequest(BaseModel):

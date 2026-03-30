@@ -4,6 +4,7 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.outputs import ChatGenerationChunk
 
 from app.config import get_settings
+from app.utils.tokenizer import count_tokens, truncate_text_keep_latest
 
 settings = get_settings()
 
@@ -26,18 +27,32 @@ class LLMService:
         4. 提供学习建议和资源推荐
 
         请用友好、专业的方式回答用户的问题。"""
-    #流式
+
+    # 流式
     async def chat_stream(
         self,
         message: str,
         history: List[Dict[str, str]],
         context: str = "",
     ) -> AsyncGenerator[Dict[str, Any], None]:
-        #拼接上下文 系统提示词+rag+上下文
-        messages = [SystemMessage(content=self.system_prompt)]
+        system_prompt = self.system_prompt
+        system_tokens = count_tokens(system_prompt)
 
+        context_to_use = context
         if context:
-            messages.append(SystemMessage(content=f"相关笔记内容：\n{context}"))
+            available_tokens = settings.max_context_tokens - system_tokens - 200
+            if available_tokens > 0:
+                context_tokens = count_tokens(context)
+                if context_tokens > available_tokens:
+                    context_to_use = truncate_text_keep_latest(context, available_tokens)
+                    print(
+                        f"[Token Control] Context truncated: {context_tokens} -> {available_tokens} tokens"
+                    )
+
+        messages = [SystemMessage(content=system_prompt)]
+
+        if context_to_use:
+            messages.append(SystemMessage(content=f"相关笔记内容：\n{context_to_use}"))
 
         for msg in history[-10:]:
             if msg["role"] == "user":
@@ -47,16 +62,28 @@ class LLMService:
 
         messages.append(HumanMessage(content=message))
 
-        #这里一次性发给llm，流式一点点返回
+        # 这里一次性发给llm，流式一点点返回
         async for chunk in self.llm.astream(messages):
             if isinstance(chunk, ChatGenerationChunk):
                 yield {"type": "content", "content": chunk.content}
-    #非流式
-    def chat(self, message: str, context: str = "") -> str:
-        messages = [SystemMessage(content=self.system_prompt)]
 
+    # 非流式
+    def chat(self, message: str, context: str = "") -> str:
+        system_prompt = self.system_prompt
+        system_tokens = count_tokens(system_prompt)
+
+        context_to_use = context
         if context:
-            messages.append(SystemMessage(content=f"相关笔记内容：\n{context}"))
+            available_tokens = settings.max_context_tokens - system_tokens - 200
+            if available_tokens > 0:
+                context_tokens = count_tokens(context)
+                if context_tokens > available_tokens:
+                    context_to_use = truncate_text_keep_latest(context, available_tokens)
+
+        messages = [SystemMessage(content=system_prompt)]
+
+        if context_to_use:
+            messages.append(SystemMessage(content=f"相关笔记内容：\n{context_to_use}"))
 
         messages.append(HumanMessage(content=message))
 
