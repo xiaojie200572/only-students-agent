@@ -83,19 +83,3 @@ def _format_user_info(user: dict) -> str:
 简介: {bio}"""
     return info
 
-
-def get_user_info_schema() -> Dict[str, Any]:
-    return {
-        "name": "get_user_info",
-        "description": "获取用户详细信息。当需要了解某个用户的个人信息时使用。",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "user_id": {
-                    "type": "integer",
-                    "description": "用户ID",
-                },
-            },
-            "required": ["user_id"],
-        },
-    }

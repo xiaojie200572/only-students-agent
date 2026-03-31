@@ -4,7 +4,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from app.config import get_settings
-from app.tools.note_search import search_notes
+from app.tools.rag_tool import search_notes
 from app.tools.note_reader import read_note
 from app.tools.user_info import get_user_info, get_current_user_info
 
@@ -66,10 +66,22 @@ class AgentService:
         messages.append(HumanMessage(content=message))
 
         try:
+            # 实时返回 Agent 执行过程中的各种事件。
             async for event in self.agent.astream_events(
                 {"messages": messages},
                 version="v1",
             ):
+                """
+                event = {
+                    "event": "on_chat_model_stream",    # 事件类型（字符串）
+                    "name": "ChatOpenAI",               # 模型/工具名
+                    "data": {                           # 数据（字典）
+                        "chunk": {                      # 内容块（字典）
+                            "content": "你好"           # 实际文本
+                        }
+                    }
+                }
+                """
                 kind = event["event"]
                 if kind == "on_chat_model_stream":
                     content = event["data"]["chunk"].content

@@ -1,10 +1,9 @@
 from fastapi import APIRouter
 from app.schemas.request import MentionRequest
 from app.schemas.response import MentionResponse
-from app.services.rag import RAGService
+from app.services.rag import rag_service
 
 router = APIRouter()
-rag_service = RAGService()
 
 
 @router.post("/mentions/{note_id}")

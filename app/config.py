@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     max_context_tokens: int = 4000
 
     # Embedding
-    embedding_model: str = "tongyi-embedding-vision-plus-2026-03-06"
+    embedding_model: str = "text-embedding-v4"
     embedding_dim: int = 1536
 
     # 向量库

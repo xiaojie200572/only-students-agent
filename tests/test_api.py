@@ -50,7 +50,7 @@ print("=" * 50)
 with httpx.stream(
     "POST",
     "http://localhost:8000/api/agent/chat",
-    json={"session_id": "test", "message": "你好", "use_rag": True},
+    json={"session_id": "test", "message": "你好"},
     timeout=60.0,
 ) as response:
     for line in response.iter_lines():
@@ -66,7 +66,7 @@ print("=" * 50)
 with httpx.stream(
     "POST",
     "http://localhost:8000/api/agent/chat",
-    json={"session_id": "test2", "message": "找一些Python学习的笔记", "use_agent": True},
+    json={"session_id": "test2", "message": "找一些Python学习的笔记"},
     timeout=60.0,
 ) as response:
     for line in response.iter_lines():
