@@ -7,21 +7,20 @@ import pika
 from pika.adapters.blocking_connection import BlockingChannel
 
 from app.config import get_settings
-from app.vector.client import VectorStore
-from app.vector.embedder import Embedder
+from app.vector import vector_store, embedder
 
 settings = get_settings()
 
 
 class NoteVectorSyncConsumer:
     def __init__(self):
-        self.vector_store = VectorStore()
-        self.embedder = Embedder()
+        self.vector_store = vector_store
+        self.embedder = embedder
         self.connection: Optional[pika.BlockingConnection] = None
         self.channel: Optional[BlockingChannel] = None
         self._running = False
 
-    def connect(self):
+    def _connect(self):
         credentials = pika.PlainCredentials(settings.rabbitmq_username, settings.rabbitmq_password)
         parameters = pika.ConnectionParameters(
             host=settings.rabbitmq_host,
@@ -54,7 +53,7 @@ class NoteVectorSyncConsumer:
 
         print(f"Connected to RabbitMQ, listening on queues: {sync_queue}, {delete_queue}")
 
-    def process_message(self, ch, method, properties, body):
+    def _process_message(self, ch, method, properties, body):
         routing_key = method.routing_key
         print(f"Received message with routing_key: {routing_key}")
 
@@ -144,16 +143,16 @@ class NoteVectorSyncConsumer:
 
     def start_consuming(self):
         self._running = True
-        self.connect()
+        self._connect()
 
         self.channel.basic_qos(prefetch_count=1)
         self.channel.basic_consume(
             queue="note.vector.sync.queue",
-            on_message_callback=self.process_message,
+            on_message_callback=self._process_message(),
         )
         self.channel.basic_consume(
             queue="note.vector.delete.queue",
-            on_message_callback=self.process_message,
+            on_message_callback=self._process_message(),
         )
 
         print("Starting to consume messages...")
@@ -170,7 +169,7 @@ class NoteVectorSyncConsumer:
             self.connection.close()
         print("RabbitMQ consumer stopped")
 
-
+#开启
 def run_consumer():
     consumer = NoteVectorSyncConsumer()
     consumer.start_consuming()

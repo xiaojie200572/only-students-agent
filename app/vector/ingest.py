@@ -4,15 +4,14 @@ import httpx
 from datetime import datetime
 
 from app.config import get_settings
-from app.vector.client import VectorStore
-from app.vector.embedder import embedder
+from app.vector import vector_store, embedder
 
 settings = get_settings()
 
 
 class NoteIngestor:
     def __init__(self):
-        self.vector_store = VectorStore()
+        self.vector_store = vector_store
         self.last_sync_time: Optional[datetime] = None
         self.sync_count: int = 0
 

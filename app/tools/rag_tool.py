@@ -1,5 +1,5 @@
 from langchain.tools import tool
-from app.services.rag import rag_service
+from app.services import rag_service
 
 
 @tool

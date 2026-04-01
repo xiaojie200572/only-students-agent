@@ -4,9 +4,7 @@ from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from app.config import get_settings
-from app.tools.rag_tool import search_notes
-from app.tools.note_reader import read_note
-from app.tools.user_info import get_user_info, get_current_user_info
+from app.tools import search_notes, search_authors, read_note, get_user_info, get_current_user_info
 
 settings = get_settings()
 
@@ -14,9 +12,10 @@ SYSTEM_PROMPT = """你是一个智能助手，专门帮助用户探索 only-stud
 
 你可以使用的工具：
 1. search_notes: 搜索站内笔记内容。当用户询问关于某个主题的笔记时使用。
-2. read_note: 读取指定笔记的详细内容。当需要获取某篇笔记的完整内容时使用。
-3. get_user_info: 获取用户详细信息。当需要了解某个用户的个人信息时使用。
-4. get_current_user_info: 获取当前登录用户的信息。
+2. search_authors: 搜索发布相关内容的作者。当用户询问"谁教 Python"、"哪个发布者讲编程"、"帮我找到教 xxx 的老师"时使用。
+3. read_note: 读取指定笔记的详细内容。当需要获取某篇笔记的完整内容时使用。
+4. get_user_info: 获取用户详细信息。当需要了解某个用户的个人信息时使用。
+5. get_current_user_info: 获取当前登录用户的信息。
 
 工作流程（Plan-Act 模式）：
 1. 先理解用户问题，思考需要哪些步骤
@@ -38,7 +37,7 @@ class AgentService:
             temperature=0.7,
         )
 
-        self.tools = [search_notes, read_note, get_user_info, get_current_user_info]
+        self.tools = [search_notes, search_authors, read_note, get_user_info, get_current_user_info]
 
         self.system_message = SYSTEM_PROMPT
 

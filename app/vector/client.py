@@ -62,6 +62,10 @@ class VectorStore:
 
             self._client.load_collection(self.collection_name)
 
+    """
+    CRUD
+    """
+
     async def search(self, query_vector: List[float], top_k: int = 5) -> List[Dict[str, Any]]:
         try:
             results = self.client.search(
@@ -141,4 +145,4 @@ class VectorStore:
             self._ensure_collection()
 
 
-# TODO
+vector_store = VectorStore()

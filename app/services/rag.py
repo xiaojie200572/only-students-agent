@@ -3,16 +3,15 @@ import httpx
 
 from app.config import get_settings
 from app.services.llm import llm_service
-from app.vector.client import VectorStore
-from app.vector.embedder import Embedder
+from app.vector import vector_store, embedder
 
 settings = get_settings()
 
 
 class RAGService:
     def __init__(self):
-        self.vector_store = VectorStore()
-        self.embedder = Embedder()
+        self.vector_store = vector_store
+        self.embedder = embedder
 
     """
     向量库中搜索近似笔记
@@ -28,9 +27,40 @@ class RAGService:
 
         return results
 
+    async def search_authors(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """搜索发布相关内容的作者"""
+        notes = await self.search_notes(query, limit=20)
+
+        if not notes:
+            return []
+
+        author_stats = {}
+        for note in notes:
+            author_name = note.get("author_name", "")
+            if not author_name:
+                continue
+
+            if author_name not in author_stats:
+                author_stats[author_name] = {
+                    "author_name": author_name,
+                    "note_count": 0,
+                    "note_titles": [],
+                    "note_ids": [],
+                }
+
+            author_stats[author_name]["note_count"] += 1
+            if len(author_stats[author_name]["note_titles"]) < 3:
+                author_stats[author_name]["note_titles"].append(note.get("title", ""))
+            author_stats[author_name]["note_ids"].append(note.get("note_id", 0))
+
+        sorted_authors = sorted(author_stats.values(), key=lambda x: x["note_count"], reverse=True)
+
+        return sorted_authors[:limit]
+
     """
     处理评论恢复
     """
+
     async def handle_mention(self, note_id: int, content: str, user_id: int) -> str:
         note = await self._get_note_detail(note_id)
 
@@ -47,32 +77,10 @@ class RAGService:
         response = llm_service.chat(message=prompt, context="")
         return response
 
-
-
-    """
-    获取上下文
-    """
-    async def _retrieve_context(self, query: str, top_k: int = 5) -> tuple[str, List[Dict]]:
-        query_vector = await self.embedder.embed_query(query)
-
-        results = await self.vector_store.search(
-            query_vector=query_vector,
-            top_k=top_k,
-        )
-
-        if not results:
-            return "", []
-
-        context_parts = []
-        for r in results:
-            context_parts.append(f"笔记《{r['title']}》:\n{r.get('content', r.get('summary', ''))}")
-
-        context = "\n\n---\n\n".join(context_parts)
-        return context, results
-
     """
     从后端获取笔记详情
     """
+
     async def _get_note_detail(self, note_id: int) -> Optional[Dict[str, Any]]:
         async with httpx.AsyncClient() as client:
             try:

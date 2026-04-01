@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from app.schemas.request import MentionRequest
 from app.schemas.response import MentionResponse
-from app.services.rag import rag_service
+from app.services import rag_service
 
 router = APIRouter()
 
